@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ChartBar, Sparkles, Share2, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useRef } from "react";
+import { BackgroundLines } from "./ui/background-lines";
 
 const container = {
   hidden: { opacity: 0 },
@@ -35,7 +36,6 @@ const letterVariants = {
   }
 };
 
-
 export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -54,7 +54,8 @@ export default function Hero() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     >
-      {/* Animated gradient background */}
+      {/* Background effects */}
+      <BackgroundLines className="opacity-50" />
       <motion.div 
         className="absolute inset-0 bg-gradient-to-b from-background via-background to-muted"
         initial={{ opacity: 0 }}
@@ -129,7 +130,7 @@ export default function Hero() {
           >
             <Link
               href="/create"
-              className="group relative inline-flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary/90 rounded-xl overflow-hidden  text-black"
+              className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-white/90 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
             >
               {/* Animated border gradient */}
               <motion.div
@@ -138,7 +139,7 @@ export default function Hero() {
                   background: `
                     linear-gradient(90deg, 
                       transparent 0%, 
-                      rgba(255, 255, 255, 0.2) 50%,
+                      rgba(147, 51, 234, 0.2) 50%,
                       transparent 100%
                     )
                   `,
@@ -179,7 +180,7 @@ export default function Hero() {
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <motion.span 
-                  className="relative font-medium text-white"
+                  className="relative font-medium text-zinc-900"
                   initial={{ opacity: 0.9 }}
                   whileHover={{ opacity: 1 }}
                 >
@@ -189,7 +190,7 @@ export default function Hero() {
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 200 }}
                 >
-                  <ArrowRight className="w-5 h-5 text-white" />
+                  <ArrowRight className="w-5 h-5 text-zinc-900" />
                 </motion.div>
 
                 {/* Sparkle effects */}
@@ -198,9 +199,9 @@ export default function Hero() {
                   initial={false}
                   animate={{
                     background: [
-                      'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                      'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
-                      'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)'
+                      'radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.1) 0%, transparent 50%)',
+                      'radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.2) 0%, transparent 50%)',
+                      'radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.1) 0%, transparent 50%)'
                     ],
                   }}
                   transition={{
