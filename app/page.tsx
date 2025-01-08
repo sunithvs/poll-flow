@@ -1,16 +1,46 @@
 import Hero from "@/components/hero";
-import ConnectSupabaseSteps from "@/components/tutorial/connect-supabase-steps";
-import SignUpUserSteps from "@/components/tutorial/sign-up-user-steps";
-import { hasEnvVars } from "@/utils/supabase/check-env-vars";
 
-export default async function Home() {
+export default function Home() {
   return (
-    <>
+    <div className="min-h-screen">
       <Hero />
-      <main className="flex-1 flex flex-col gap-6 px-4">
-        <h2 className="font-medium text-xl mb-4">Next steps</h2>
-        {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
+      <main className="max-w-7xl mx-auto px-4 py-12">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <FeatureCard
+            title="Real-time Results"
+            description="Watch votes come in live with instant updates powered by Supabase's real-time subscriptions."
+            icon="📊"
+          />
+          <FeatureCard
+            title="Easy Sharing"
+            description="Share your poll with a unique URL. No account required for voters."
+            icon="🔗"
+          />
+          <FeatureCard
+            title="Rich Analytics"
+            description="Get detailed insights with vote counts, timestamps, and visual representations."
+            icon="📈"
+          />
+        </section>
       </main>
-    </>
+    </div>
+  );
+}
+
+function FeatureCard({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+}) {
+  return (
+    <div className="p-6 rounded-lg bg-card border border-border hover:border-primary transition-colors">
+      <div className="text-4xl mb-4">{icon}</div>
+      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <p className="text-muted-foreground">{description}</p>
+    </div>
   );
 }

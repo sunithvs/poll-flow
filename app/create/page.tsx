@@ -5,6 +5,8 @@ import { nanoid } from 'nanoid';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 
 export default function CreatePoll() {
   const router = useRouter();
@@ -37,7 +39,6 @@ export default function CreatePoll() {
     try {
       const urlSlug = nanoid(10);
       
-      // Create poll
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .insert({
@@ -50,7 +51,6 @@ export default function CreatePoll() {
 
       if (pollError) throw pollError;
 
-      // Create options
       const optionsToInsert = options
         .filter(opt => opt.trim() !== '')
         .map(option_text => ({
@@ -75,66 +75,105 @@ export default function CreatePoll() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Create a New Poll</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Question
-            <input
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-              maxLength={500}
-            />
-          </label>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-2xl mx-auto"
+      >
+        <div className="bg-card rounded-xl shadow-lg border border-border p-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-foreground bg-clip-text text-transparent mb-2">
+            Create a New Poll
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            Create your poll and share it with others to get instant feedback.
+          </p>
 
-        <div className="space-y-4">
-          <label className="block text-sm font-medium">Options</label>
-          {options.map((option, index) => (
-            <div key={index} className="flex gap-2">
-              <input
-                type="text"
-                value={option}
-                onChange={(e) => handleOptionChange(index, e.target.value)}
-                className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-                maxLength={200}
-                placeholder={`Option ${index + 1}`}
-              />
-              {options.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeOption(index)}
-                  className="px-3 py-2 text-red-600 hover:text-red-800"
-                >
-                  Remove
-                </button>
-              )}
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-4">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-foreground">Question</span>
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  className="w-full px-4 py-3 rounded-lg bg-background border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  required
+                  maxLength={500}
+                  placeholder="What would you like to ask?"
+                />
+              </label>
             </div>
-          ))}
-        </div>
 
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={addOption}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800"
-          >
-            + Add Option
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Creating...' : 'Create Poll'}
-          </button>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Options</span>
+                <span className="text-xs text-muted-foreground">
+                  {options.length} option{options.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              
+              <motion.div className="space-y-3">
+                {options.map((option, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex gap-3 items-center"
+                  >
+                    <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-medium">
+                      {index + 1}
+                    </div>
+                    <input
+                      type="text"
+                      value={option}
+                      onChange={(e) => handleOptionChange(index, e.target.value)}
+                      className="flex-1 px-4 py-3 rounded-lg bg-background border border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                      required
+                      maxLength={200}
+                      placeholder="Enter an option"
+                    />
+                    {options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOption(index)}
+                        className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-destructive/10 text-destructive transition-colors"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <button
+                type="button"
+                onClick={addOption}
+                className="flex-1 px-4 py-3 rounded-lg border-2 border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary transition-colors text-sm font-medium"
+              >
+                + Add Another Option
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating Poll...
+                  </>
+                ) : (
+                  'Create Poll'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      </motion.div>
     </div>
   );
 }

@@ -14,6 +14,10 @@ import {
   Legend,
 } from 'chart.js';
 import type { Poll, Option, Response } from '@/lib/supabase';
+import { motion } from 'framer-motion';
+import { Loader2, Users, ChartBar, Clock, Share2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast'; // Import toast
 
 ChartJS.register(
   CategoryScale,
@@ -26,15 +30,16 @@ ChartJS.register(
 
 export default function ResultsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
+  const router = useRouter();
   const [poll, setPoll] = useState<Poll | null>(null);
   const [options, setOptions] = useState<Option[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     async function fetchPollData() {
       try {
-        // Fetch poll
         const { data: pollData, error: pollError } = await supabase
           .from('polls')
           .select('*')
@@ -44,7 +49,6 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
         if (pollError) throw pollError;
         setPoll(pollData);
 
-        // Fetch options
         const { data: optionsData, error: optionsError } = await supabase
           .from('options')
           .select('*')
@@ -53,7 +57,6 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
         if (optionsError) throw optionsError;
         setOptions(optionsData);
 
-        // Fetch responses
         const { data: responsesData, error: responsesError } = await supabase
           .from('responses')
           .select('*')
@@ -70,7 +73,6 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
 
     fetchPollData();
 
-    // Set up real-time subscription
     const subscription = supabase
       .channel('responses')
       .on(
@@ -94,12 +96,47 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
     };
   }, [slug, poll?.id]);
 
+  const handleShare = async () => {
+    try {
+      const baseUrl = window.location.origin;
+      const pollUrl = `${baseUrl}/${slug}`;
+      await navigator.clipboard.writeText(pollUrl);
+      toast.success('Poll URL copied to clipboard!');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy URL:', error);
+      toast.error('Failed to copy URL');
+    }
+  };
+
   if (loading) {
-    return <div className="max-w-2xl mx-auto p-6">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 flex items-center justify-center">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Loading results...</span>
+        </div>
+      </div>
+    );
   }
 
   if (!poll) {
-    return <div className="max-w-2xl mx-auto p-6">Poll not found</div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-4xl">🤔</div>
+          <h1 className="text-2xl font-semibold text-foreground">Poll Not Found</h1>
+          <p className="text-muted-foreground">This poll may have been deleted or deactivated.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const optionVotes = options.map(option => ({
@@ -115,9 +152,9 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
       {
         label: 'Votes',
         data: optionVotes.map(opt => opt.votes),
-        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-        borderColor: 'rgb(59, 130, 246)',
-        borderWidth: 1,
+        backgroundColor: 'rgba(147, 51, 234, 0.3)',
+        borderColor: 'rgb(147, 51, 234)',
+        borderWidth: 2,
       },
     ],
   };
@@ -129,8 +166,7 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
         display: false,
       },
       title: {
-        display: true,
-        text: 'Poll Results',
+        display: false,
       },
     },
     scales: {
@@ -138,58 +174,134 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
         beginAtZero: true,
         ticks: {
           stepSize: 1,
+          color: '#64748b',
+        },
+        grid: {
+          color: 'rgba(100, 116, 139, 0.1)',
+        },
+      },
+      x: {
+        ticks: {
+          color: '#64748b',
+        },
+        grid: {
+          display: false,
         },
       },
     },
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">{poll.question}</h1>
-
-      <div className="mb-8">
-        <Bar data={chartData} options={chartOptions} />
-      </div>
-
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Results Breakdown</h2>
-        <div className="space-y-4">
-          {optionVotes.map(option => (
-            <div key={option.id} className="flex justify-between items-center">
-              <span>{option.option_text}</span>
-              <div className="text-right">
-                <span className="font-medium">{option.votes}</span>
-                <span className="text-gray-500 ml-2">
-                  ({totalVotes ? ((option.votes / totalVotes) * 100).toFixed(1) : 0}%)
-                </span>
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-3xl mx-auto space-y-6"
+      >
+        <div className="bg-card rounded-xl shadow-lg border border-border p-8">
+          <div className="space-y-4 mb-6">
+            <h1 className="text-3xl font-bold">{poll.question}</h1>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Users className="w-4 h-4" />
+                <span>{totalVotes} vote{totalVotes !== 1 ? 's' : ''}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground hover:opacity-90 transition-opacity"
+                >
+                  <Share2 className="w-4 h-4" />
+                  {copied ? 'Copied!' : 'Share Poll'}
+                </button>
+                <button
+                  onClick={() => router.push('/create')}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
+                >
+                  <span className="font-medium">Create New Poll</span>
+                </button>
               </div>
             </div>
-          ))}
-        </div>
-        <div className="mt-4 text-right">
-          <span className="font-medium">Total Votes: {totalVotes}</span>
-        </div>
-      </div>
+          </div>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Recent Responses</h2>
-        <div className="space-y-2">
-          {responses.slice().reverse().map(response => {
-            const option = options.find(o => o.id === response.option_id);
-            return (
-              <div key={response.id} className="flex justify-between items-center text-sm">
-                <span className="font-medium">{response.respondent_name}</span>
-                <div className="text-right">
-                  <span className="text-gray-600">{option?.option_text}</span>
-                  <span className="text-gray-400 ml-2">
-                    {new Date(response.submitted_at).toLocaleTimeString()}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+          <div className="mb-8">
+            <Bar data={chartData} options={chartOptions} className="mb-6" />
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-4">
+              {optionVotes.map((option, index) => (
+                <motion.div
+                  key={option.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-background rounded-lg p-4 border border-border"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{option.option_text}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">{option.votes}</span>
+                      <span className="text-sm text-muted-foreground">
+                        ({totalVotes ? ((option.votes / totalVotes) * 100).toFixed(1) : 0}%)
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${totalVotes ? (option.votes / totalVotes) * 100 : 0}%` }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      className="h-full bg-primary"
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-card rounded-xl shadow-lg border border-border p-8"
+        >
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">Recent Responses</h2>
+          </div>
+          <div className="space-y-4">
+            {responses.slice().reverse().map((response, index) => {
+              const option = options.find(o => o.id === response.option_id);
+              return (
+                <motion.div
+                  key={response.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="flex justify-between items-center p-3 rounded-lg bg-background border border-border"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-primary font-medium">
+                        {response.respondent_name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="font-medium">{response.respondent_name}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm text-muted-foreground">{option?.option_text}</span>
+                    <span className="text-xs text-muted-foreground/60 ml-2">
+                      {new Date(response.submitted_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
