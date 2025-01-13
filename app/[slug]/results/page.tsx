@@ -43,7 +43,7 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
         const { data: pollData, error: pollError } = await supabase
           .from('polls')
           .select('*')
-          .eq('url_slug', slug)
+          .eq('url_slug', slug,)
           .single();
 
         if (pollError) throw pollError;
@@ -121,6 +121,7 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
     );
   }
 
+
   if (!poll) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 flex items-center justify-center">
@@ -128,6 +129,23 @@ export default function ResultsPage({ params }: { params: Promise<{ slug: string
           <div className="text-4xl">🤔</div>
           <h1 className="text-2xl font-semibold text-foreground">Poll Not Found</h1>
           <p className="text-muted-foreground">This poll may have been deleted or deactivated.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (poll.show_results === true) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted py-12 px-4 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-4xl">🤔</div>
+          <h1 className="text-2xl font-semibold text-foreground">Results Not Available</h1>
+          <p className="text-muted-foreground">The creator of this poll has disabled result sharing.</p>
           <button
             onClick={() => router.push('/')}
             className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity"

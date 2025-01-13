@@ -12,6 +12,7 @@ export type Poll = {
   last_edited_at: string;
   is_active: boolean;
   url_slug: string;
+  show_results: boolean;
 };
 
 export type Option = {
